@@ -1,0 +1,10 @@
+{
+    "points": ["N6963553.44E200781.8", "N6957458.52E199148.32"],
+    "barriers": [["N6957277E200330.08", "N6957161.5E200115.52",
+                  "N6957174E199795.72", "N6957224.5E199404.02",
+                  "N6957406E199319.89"]],
+    "covering_length": 1.5,
+    "covering_width": 1.5,
+    "output_fname": "kraakvasstind.gpx",
+    "track_name": "Bårdsgarden - Kråkvasstind"
+}

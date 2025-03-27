@@ -1,0 +1,33 @@
+[package]
+name = "stivalg"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bincode = { version = "2.0.0-rc.3", features = ["serde"] }
+bytes = { version = "*", features = ["serde"] }
+clap = { version = "*", features = ["cargo"] }
+clap-cargo = "*"
+cmdui = { git = "https://github.com/erikoest/cmdui" }
+crossbeam-channel = "*"
+csv = "*"
+eframe = { version = "0.31", default-features = false, features = [
+           "default_fonts", "wgpu", "persistence", "glow"] }
+egui = "*"
+egui-wgpu = "0.31"
+env_logger = "*"
+galileo = { git = "https://github.com/Maximkaaa/galileo.git" }
+galileo-types = { git = "https://github.com/Maximkaaa/galileo.git" }
+geo-types = "*"
+gpx = "*"
+hoydedata = { git = "https://github.com/erikoest/hoydedata.git" }
+lazy-regex = "*"
+lazy_static = "*"
+more-config = { version = "*", features = ["json", "mem", "env", "cmd",
+                "binder"] }
+num-traits = "*"
+parking_lot = "0.12"
+serde = { version = "*", features = ["derive", "rc"] }
+serde_json = "*"
+tokio = { version = "1.0", features = ["full"] }
+wgpu = { version = "24", default-features = false }

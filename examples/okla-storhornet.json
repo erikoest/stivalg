@@ -1,0 +1,9 @@
+{
+    "points": ["N6963553.44E200781.8", "N6964068.58E206572.79",
+"N6962525.36E209055.33", "N6960901.62E210319.41", "N6958819.31E213153.23",
+"N6955460.32E216188.04"],
+    "covering_length": 1.5,
+    "covering_width": 1.5,
+    "output_fname": "okla-storhornet.gpx",
+    "track_name": "Bårdsgården - Okla - Storhornet"
+}
