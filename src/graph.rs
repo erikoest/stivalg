@@ -228,7 +228,6 @@ impl Graph {
         while let Some(c) = reverse.pop() {
             p.push(c);
         }
-        p.time = times[end];
 
         return Some(p);
     }

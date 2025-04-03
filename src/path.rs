@@ -85,6 +85,7 @@ impl Segment {
             }
 
             let s = de*dx + dn*dy;
+            // den*dxy = de*dx + dn*dy = |den||dxy|*cos(phi)
             time += l*Segment::time_by_steepness(s, abs);
         }
 
@@ -255,14 +256,74 @@ impl Path {
     // Optimize path using iterative relaxation.
     pub fn optimize(&mut self, atlas: &Atlas) {
         println!("Improving path iteratively.");
-        let de = Coord::new(4.0, 0.0);
-        let dn = Coord::new(0.0, 4.0);
+        // let de = Coord::new(4.0, 0.0);
+        // let dn = Coord::new(0.0, 4.0);
         let mut time = self.calculate_time(atlas);
         println!("Before adjustments: Time {}, points {}", time,
                  self.points.len());
 
+        // Split long segments, join nearby vertices.
+        let mut new_points = vec!();
+        // Always push start point
+        let mut c = self.points[0];
+        new_points.push(c);
+        let mut i = 1;
+        let len = self.points.len();
+
+        loop {
+            let n = self.points[i];
+
+            if i == len - 1 {
+                // Always push end point
+                new_points.push(n);
+                break;
+            }
+
+            let d = (n - c).abs();
+
+            if d > 20.0 {
+                // Long distance. Create intermediate point between this
+                // one and the next.
+                let c2 = (c + n)*0.5;
+                // Check that path exists from current point via
+                // intermediate ptoint to next point.
+                if self.tripoint_time(c, c2, n, atlas).is_finite() {
+                    new_points.push(c2);
+                    c = c2;
+                    continue;
+                }
+            }
+
+            if d < 10.0 && i + 1 < len {
+                // Short distance.
+                // Check that path exists from current point to the point
+                // beyond the next one. Then skip the next point.
+                if let Some(_) = Segment::new(c, self.points[i + 1])
+                    .time(atlas) {
+                    i += 1;
+                    continue;
+                }
+            }
+
+            // Medium distance (no changes to path). Push point and
+            // increment.
+            new_points.push(n);
+            c = n;
+            i += 1;
+        }
+
+        self.points = new_points;
+
+        time = self.calculate_time(atlas);
+
+        println!("After reducing points: Time {}, points {}", time,
+                 self.points.len());
+
+        let mut range = 0.2;
+
         loop {
             let len = self.points.len();
+            let mut max_j: i32 = 0;
 
             for i in 1..len - 1 {
                 // Current, previous and next point
@@ -271,119 +332,47 @@ impl Path {
                 let n = self.points[i + 1];
 
                 let t0 = self.tripoint_time(p, c, n, atlas);
-                let te1 = self.tripoint_time(p, c - de, n, atlas);
-                let te2 = self.tripoint_time(p, c + de, n, atlas);
-                let tn1 = self.tripoint_time(p, c - dn, n, atlas);
-                let tn2 = self.tripoint_time(p, c + dn, n, atlas);
+                let mut dc = (n - p).rot90();
 
-                let mut dc_n = Coord::new(0.0, 0.0);
-                let mut dc_e = Coord::new(0.0, 0.0);
-
-                if te1.is_finite() {
-                    dc_e += de*(te1 - t0);
-                }
-                if te2.is_finite() {
-                    dc_e += de*(t0 - te2);
-                }
-                if tn1.is_finite() {
-                    dc_n += dn*(tn1 - t0);
-                }
-                if tn2.is_finite() {
-                    dc_n += dn*(t0 - tn2);
-                }
-
-                let mut dc = (dc_e + dc_n)*16.0;
-
-                if dc.abs() == 0.0 {
-                    continue;
-                }
-
-                if dc.abs() > 20.0 {
-                    dc = dc.normalize()*20.0;
+                if dc.abs() > 40.0 {
+                    dc = dc.normalize()*40.0;
                 }
 
                 let mut tmin = t0;
+                let mut j_used = 10;
 
                 for j in 1..21 {
-                    let cj = c + dc*((j as f32)*0.5);
+                    let cj = c + dc*((j as f32 - 10.0)*range);
                     let tj = self.tripoint_time(p, cj, n, atlas);
 
                     if tj < tmin {
-//                        let l = (c - cj).abs();
-//                        println!("Moving point {} meters", l);
                         self.points[i] = cj;
                         tmin = tj;
-                    }
-                }
-            }
-
-            // Split long segments, join nearby vertices.
-            let mut new_points = vec!();
-            // Always push start point
-            let mut c = self.points[0];
-            new_points.push(c);
-            let mut i = 1;
-
-            loop {
-                let n = self.points[i];
-
-                if i == len - 1 {
-                    // Always push end point
-                    new_points.push(n);
-                    break;
-                }
-
-                let d = (n - c).abs();
-
-                if d > 20.0 {
-                    // Long distance. Create intermediate point between this
-                    // one and the next.
-                    let c2 = (c + n)*0.5;
-                    // Check that path exists from current point via
-                    // intermediate ptoint to next point.
-                    if self.tripoint_time(c, c2, n, atlas).is_finite() {
-                        new_points.push(c2);
-                        c = c2;
-                        continue;
+                        j_used = j;
                     }
                 }
 
-                if d < 10.0 && i + 1 < len {
-                    // Short distance.
-                    // Check that path exists from current point to the point
-                    // beyond the next one. Then skip the next point.
-                    if let Some(_) = Segment::new(c, self.points[i + 1])
-                        .time(atlas) {
-                        i += 1;
-                        continue;
-                    }
+                if tmin < t0 {
+                    max_j = max_j.max(((j_used as i32) - 10).abs());
                 }
-
-                // Medium distance (no changes to path). Push point and
-                // increment.
-                new_points.push(n);
-                c = n;
-                i += 1;
             }
 
             let time2 = self.calculate_time(atlas);
 
-            println!("After adjustments: Time {}, points {}", time2,
-                     self.points.len());
-            if time - time2 < 0.001 {
+            println!("After adjustments: Time {}, range {} max_j {}",
+                     time2, range, max_j);
+            if time - time2 < 0.1e-7 {
+                break;
+            }
+
+            if time2 == 0.0 || !time2.is_finite() {
+                println!("Path is no longer walkable");
                 break;
             }
 
             time = time2;
-
-            if time2 != 0.0 && time2.is_finite() {
-                self.points = new_points;
-            }
-            else {
-                println!("Path is no longer walkable");
-                println!("Old path: {}", self.points.len());
-                println!("New path: {}", new_points.len());
-            }
+            // Adjust next range relative to maximal sideways adjustmest
+            range = (max_j as f32)*range/5.0;
         }
     }
 
@@ -452,7 +441,6 @@ impl Path {
 
         Self {
             points: points,
-            time: 0.0,
         }
     }
 

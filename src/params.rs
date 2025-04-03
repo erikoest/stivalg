@@ -7,10 +7,10 @@ use std::fs::File;
 use std::io::Read;
 
 fn default_grid_size_pass1() -> f32 { 25.0 }
-fn default_grid_size_pass2() -> f32 { 2.0 }
+fn default_grid_size_pass2() -> f32 { 1.0 }
 fn default_covering_length() -> f32 { 1.1 }
 fn default_covering_width() -> f32 { 1.1 }
-fn default_path_width_pass2() -> f32 { 250.0 }
+fn default_path_width_pass2() -> f32 { 1000.0 }
 fn default_track_name() -> String { "Stivalg".to_string() }
 
 #[derive(Deserialize, Serialize)]
